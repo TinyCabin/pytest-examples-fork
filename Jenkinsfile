@@ -1,53 +1,51 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Builder') {
-        steps {
-            sh '''
-            docker build --target builder -t pytest_builder \
-                -f /var/jenkins_home/Dockerfiles/Dockerfile .
-            '''
-        }
-    }
-
-
-    stage('Tester') {
-        steps {
-            sh '''
-            docker build --target tester -t pytest_tester \
-                -f /var/jenkins_home/Dockerfiles/Dockerfile .
-            '''
-      }
-    }
-
-    stage('Deploy') {
-        steps {
-            sh '''
-            docker build --target deploy -t pytest_deploy \
-                -f /var/jenkins_home/Dockerfiles/Dockerfile .
-            '''
-        }
-    }
-
-
-    stage('Artifacts deployment') {
-        steps {
-            script {
-                sh 'docker create --name tmp pytest_deploy'
-                sh 'docker cp tmp:/packages $WORKSPACE/packages'
-                sh 'docker rm tmp'
+    stages {
+        stage('Builder') {
+            steps {
+                sh '''
+                    docker build --target builder -t pytest_builder \
+                        -f /var/jenkins_home/Dockerfiles/Dockerfile /var/jenkins_home
+                '''
             }
-            archiveArtifacts artifacts: 'packages/**/*', fingerprint: true
+        }
+
+        stage('Tester') {
+            steps {
+                sh '''
+                    docker build --target tester -t pytest_tester \
+                        -f /var/jenkins_home/Dockerfiles/Dockerfile /var/jenkins_home
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    docker build --target deploy -t pytest_deploy \
+                        -f /var/jenkins_home/Dockerfiles/Dockerfile /var/jenkins_home
+                '''
+            }
+        }
+
+        stage('Artifacts deployment') {
+            steps {
+                script {
+                    sh 'docker create --name tmp pytest_deploy'
+                    sh 'docker cp tmp:/packages $WORKSPACE/packages'  // copy packages from conteiner to Jenkins workspace 
+                    sh 'docker rm tmp'
+                }
+
+                archiveArtifacts artifacts: 'packages/**/*', fingerprint: true
+            }
         }
     }
 
-
-  }
-
-  post {
-    always {
-      archiveArtifacts artifacts: 'test.log', fingerprint: true
+    post {
+        always {
+            sh 'docker cp tmp:/path/to/test.log $WORKSPACE/test.log'
+            archiveArtifacts artifacts: 'test.log', fingerprint: true
+        }
     }
-  }
 }
