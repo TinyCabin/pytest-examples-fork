@@ -6,7 +6,7 @@ pipeline {
         steps {
             sh '''
             docker build --target builder -t pytest_builder \
-                -f Dockerfile .
+                -f /var/jenkins_home/Dockerfiles/Dockerfile .
             '''
         }
     }
@@ -16,7 +16,7 @@ pipeline {
         steps {
             sh '''
             docker build --target tester -t pytest_tester \
-                -f Dockerfile .
+                -f /var/jenkins_home/Dockerfiles/Dockerfile .
             '''
       }
     }
@@ -25,7 +25,7 @@ pipeline {
         steps {
             sh '''
             docker build --target deploy -t pytest_deploy \
-                -f Dockerfile .
+                -f /var/jenkins_home/Dockerfiles/Dockerfile .
             '''
         }
     }
